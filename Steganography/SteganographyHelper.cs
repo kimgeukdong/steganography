@@ -5,97 +5,97 @@ namespace Steganography
 {
     class SteganographyHelper
     {
-        public enum State //상태
+        public enum State
         {
-            Hiding, // 숨김
-            Filling_With_Zeros // 0으로 채움
+            Hiding,
+            Filling_With_Zeros
         };
 
-        public static Bitmap embedText(string text, Bitmap bmp)
+        public static Bitmap embedText(string text, Bitmap bmp)//이미지에 텍스트를 숨기기 위한 메소드입니다.
         {
-            State state = State.Hiding; //현재 상태를 숨김 상태로 변경
+            State state = State.Hiding;//state state는 state.hiding로 하고
 
-            int charIndex = 0; //변수 charIndex 선언과 0으로 지정
+            int charIndex = 0;//숨길 텍스트를 문자 단위로 인덱스 표현
 
-            int charValue = 0;//변수 charValue 선언과 0으로 지정
+            int charValue = 0;//문자 단위로 값 초기화
 
-            long pixelElementIndex = 0;//변수 pixeIElementIndex 선언과 0으로 지정
+            long pixelElementIndex = 0;// 이미지 픽셀 R,G,B에 char단위로 저장하는 변수 설정 
 
-            int zeros = 0; //변수 zeros 선언과 0으로 지정
+            int zeros = 0;//마지막 데이터를 표현할때 문자를 카운터하는 변수 설정
 
-            int R = 0, G = 0, B = 0; //변수 R,G, B 선언과 0으로 지정
+            int R = 0, G = 0, B = 0; //R,G,B값 0으로 초기화
 
-            for (int i = 0; i < bmp.Height; i++) // 높이를 처음부터 끝까지 반복
+            for (int i = 0; i < bmp.Height; i++)//배열 형태의 이미지
             {
-                for (int j = 0; j < bmp.Width; j++) // 너비를 처음부터 끝까지 반복
+                for (int j = 0; j < bmp.Width; j++)
                 {
-                    Color pixel = bmp.GetPixel(j, i); //pixel값 지정
+                    Color pixel = bmp.GetPixel(j, i);//픽셀 값을 i,l에 저장
 
-                    R = pixel.R - pixel.R % 2; // (원래 R값/2)의 나머지만큼 빼줌
-                    G = pixel.G - pixel.G % 2; // (원래 G값/2)의 나머지만큼 빼줌
-                    B = pixel.B - pixel.B % 2; // (원래 B값/2)의 나머지만큼 빼줌
+                    R = pixel.R - pixel.R % 2;//픽셀 R의 LSB를 2로 나누어 0으로 저장
+                    G = pixel.G - pixel.G % 2;//픽셀 G의 LSB를 2로 나누어 0으로 저장
+                    B = pixel.B - pixel.B % 2;//픽셀 B의 LSB를 2로 나누어 0으로 저장
 
-                    for (int n = 0; n < 3; n++) // 각 R,G,B 값에 비트 저장
+                    for (int n = 0; n < 3; n++)//픽셀에 해당되는 값을 세팅하기 위한 반복
                     {
-                        if (pixelElementIndex % 8 == 0) // 8로 나눈 너마지가 0일때
+                        if (pixelElementIndex % 8 == 0)//0이거나 8의 배수(다음 수행할 문자 지정)
                         {
-                            if (state == State.Filling_With_Zeros && zeros == 8)
-                            {// state와 0으로 채운 상태가 8일때
-                                if ((pixelElementIndex - 1) % 3 < 2)
-                                {//픽셀값-1을 3으로 나눈 나머지가 1 또는 0일때
-                                    bmp.SetPixel(j, i, Color.FromArgb(R, G, B));
-                                }//픽셀 지정 rgb 비트 값으로
+                            if (state == State.Filling_With_Zeros && zeros == 8)//데이터를 슴기고 8의 배수도 다 수행이 된 경우
+                            {
+                                if ((pixelElementIndex - 1) % 3 < 2)//픽셀에 B값이 저장된 경우
+                                {
+                                    bmp.SetPixel(j, i, Color.FromArgb(R, G, B));//해당 픽셀에 나머지 R,G값 세팅
+                                }
 
-                                return bmp;
+                                return bmp;// 적용된 BMP을 반환
                             }
 
-                            if (charIndex >= text.Length) 
-                            {//텍스트 길이보다 charindex가 큰 경우일때
-                                state = State.Filling_With_Zeros; // state값 변경
+                            if (charIndex >= text.Length)// 해당 텍스트를 전부 다 저장한 경우
+                            {
+                                state = State.Filling_With_Zeros;//state는 filling with zeoros를 가리킴.
                             }
-                            else
-                            {//텍스트길이가 charindex보다 작은경우일때
-                                charValue = text[charIndex++]; // 텍스트를 charvalue에 입력 
+                            else 
+                            {
+                                charValue = text[charIndex++];//해당 텍스트에 아직 남아있는 경우엔 char인덱스를 1증가하고 다시 저장
                             }
                         }
 
-                        switch (pixelElementIndex % 3)//픽셀 인덱스를 3으로 나눈 나머지에 대한 경우
+                        switch (pixelElementIndex % 3)//R,G,B값을 다시 수행해서 해당 문자를 저장하기 위해 수행 
                         {
-                            case 0: // 0일때
+                            case 0://case가 1인경우(픽셀에 R인경우)
                                 {
-                                    if (state == State.Hiding)  //숨김 상태일 때
+                                    if (state == State.Hiding)//state가 state.hiding를 가리키면
                                     {
-                                        R += charValue % 2; //r값에 charValue/2의 나머지값을 더함
-                                        charValue /= 2; // charValue를 2로 나눈 값을 charValue에 저장
+                                        R += charValue % 2;//LSB에 R을 저장
+                                        charValue /= 2;//해당 값을 2로 나눔
                                     }
                                 } break;
-                            case 1:// 1일때
+                            case 1:// 픽셀에 G인 경우
                                 {
-                                    if (state == State.Hiding) // 숨김 상태일 때
+                                    if (state == State.Hiding)//state가 state.hiding를 가리키면
                                     {
-                                        G += charValue % 2; //위와 동일
+                                        G += charValue % 2;//LSB에 G를 저장
 
-                                        charValue /= 2;
+                                        charValue /= 2;//해당 값을 2로 나누어 이동
                                     }
                                 } break;
-                            case 2: // 2일때
+                            case 2://픽셀에 B인 경우
                                 {
-                                    if (state == State.Hiding)// 숨김 상태일 때
+                                    if (state == State.Hiding)//state가 state.hiding를 가리키면
                                     {
-                                        B += charValue % 2;// 위와 동일
+                                        B += charValue % 2;//LSB에 B를 저장
 
-                                        charValue /= 2;
+                                        charValue /= 2;//다시 2로 나누어 이동
                                     }
 
-                                    bmp.SetPixel(j, i, Color.FromArgb(R, G, B));//픽셀 지정 rgb 비트 값으로
+                                    bmp.SetPixel(j, i, Color.FromArgb(R, G, B));//숨길 이미지 텍스트에 LSB에 RGB세팅
                                 } break;
                         }
 
-                        pixelElementIndex++; // 픽셀인덱스 증가
+                        pixelElementIndex++;//1증가
 
-                        if (state == State.Filling_With_Zeros) 
-                        {// state가 0으로 채워진 상태일때
-                            zeros++; //제로 1증가
+                        if (state == State.Filling_With_Zeros)//만약 state가 filling with zeros일 경우
+                        {
+                            zeros++;//1증가
                         }
                     }
                 }
@@ -104,62 +104,62 @@ namespace Steganography
             return bmp;
         }
 
-        public static string extractText(Bitmap bmp)
-        { // 이미지에서 text추출하는 함수
-            int colorUnitIndex = 0;
-            int charValue = 0;
-            //변수 선언 후 0 저장
-            string extractedText = String.Empty;
+        public static string extractText(Bitmap bmp)//이미지의 비트를 추출하는 과정
+        {
+            int colorUnitIndex = 0;//하나하나 RGB에 인덱스 설정
+            int charValue = 0;//문자의 값을 위한 변수
 
-            for (int i = 0; i < bmp.Height; i++)// 높이 처음부터 끝까지 반복
+            string extractedText = String.Empty;//추출된 결과값을 저장하기 위해 설정
+
+            for (int i = 0; i < bmp.Height; i++)//반복으로 각 방문한다
             {
-                for (int j = 0; j < bmp.Width; j++)//너비 처음부터 끝까지 반복
+                for (int j = 0; j < bmp.Width; j++)
                 {
-                    Color pixel = bmp.GetPixel(j, i); // 픽셀 값을 받아옴
-                    for (int n = 0; n < 3; n++) //R,G,B값을 받기위해 3번 반복
+                    Color pixel = bmp.GetPixel(j, i);//픽셀 값을 j,i저장
+                    for (int n = 0; n < 3; n++)
                     {
-                        switch (colorUnitIndex % 3) //colorUnitIndex를 3으로 나눈 나머지
-                        {//원래 값을 복구하는 식
-                            case 0: 
+                        switch (colorUnitIndex % 3)
+                        {
+                            case 0:
                                 {
-                                    charValue = charValue * 2 + pixel.R % 2; //charValue는 charValue 두배에 픽셀R값을 2로나눈 나머지를 더한 값.
+                                    charValue = charValue * 2 + pixel.R % 2;//픽셀의 R에 LSB값추출한 후 결과값을 저장하는 곳에 저장
                                 } break;
                             case 1:
                                 {
-                                    charValue = charValue * 2 + pixel.G % 2; // 위와 동일
+                                    charValue = charValue * 2 + pixel.G % 2;//픽셀의 G에 LSB값추출한 후 결과값을 저장하는 곳에 저장
                                 } break;
                             case 2:
                                 {
-                                    charValue = charValue * 2 + pixel.B % 2; // 위와 동일
+                                    charValue = charValue * 2 + pixel.B % 2;//픽셀의 B에 LSB값추출한 후 결과값을 저장하는 곳에 저장
                                 } break;
                         }
 
-                        colorUnitIndex++; // 1증가
+                        colorUnitIndex++;//값 1을 증가
 
-                        if (colorUnitIndex % 8 == 0) //  복구된 값을 8로 나눈 나머지가 0일때
+                        if (colorUnitIndex % 8 == 0)//8회 수행
                         {
-                            charValue = reverseBits(charValue);// 복구 과정에서 역순으로 지정된 비트수를 원래대로 돌려주기 위해 
-                                                               // 비트를 뒤집음 
-                            if (charValue == 0)
-                            {
-                                return extractedText; // 복구가 끝나면 리텅
-                            }
-                            char c = (char)charValue;// int타입을 char로 변환
+                            charValue = reverseBits(charValue);//값을 거꾸로 되있던 걸 다시 리벌스하는 것
 
-                            extractedText += c.ToString(); // extractedText(추출된 문자)에 문자 저장
+                            if (charValue == 0)//만약 추출할 값이 0인 경우
+                            {
+                                return extractedText;//추출된텍스트를 반환
+                            }
+                            char c = (char)charValue;// 문자형으로 표현함
+
+                            extractedText += c.ToString();//계속 문자형으로 저장함
                         }
                     }
                 }
             }
 
-            return extractedText;
+            return extractedText;//추출된 텍스트 반환
         }
 
-        public static int reverseBits(int n) // 위에 사용된 비트를 역순으로 만들어주는 함수
+        public static int reverseBits(int n)//역 변환하기 위한 호출
         {
-            int result = 0;
+            int result = 0;//결과 값 0세팅
 
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < 8; i++)// 8회 반복
             {
                 result = result * 2 + n % 2;
 
